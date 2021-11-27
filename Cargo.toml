@@ -2,8 +2,13 @@
 name = "widerror"
 version = "0.1.0"
 edition = "2021"
+resolver = "2"
 description = "Error type with wide attributes, used for API unified error code."
 license = "MIT"
+authors = ["henrylee2cn <henrylee2cn@gmail.com>"]
+repository = "https://github.com/henrylee2cn/widerror"
+categories = ["development-tools"]
+keywords = ["error", "errors"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
