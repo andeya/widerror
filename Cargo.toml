@@ -13,3 +13,6 @@ keywords = ["error", "errors"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_repr = "0.1"
+serde_json = "1.0"

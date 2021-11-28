@@ -1,3 +1,10 @@
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
+
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct WidError {
     /// error message
     pub message: Message,
@@ -18,22 +25,55 @@ pub struct WidError {
     pub level: u8,
     pub retry_mode: RetryMode,
     pub pass_through_mode: PassThroughMode,
-    pub mapping_code: Option<i64>,
+    pub mapping_code: i64,
+    source_error: Option<Box<WidError>>,
+}
+
+impl WidError {
+    pub fn new() -> WidError {
+        WidError::default()
+    }
+    pub fn set_source(mut self, e: Box<WidError>) -> WidError {
+        self.source_error = Some(e);
+        self
+    }
+}
+
+impl Display for WidError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+               "code={}, name={}, namespace_code={}, sub_code={}, scope={}, kind={}, level={}, message={}, retry_mode={}, pass_through_mode={}, mapping_code={}, source_error=({})",
+               self.code, self.name, self.namespace_code, self.sub_code, self.scope, self.kind, self.level, self.message, self.retry_mode, self.pass_through_mode, self.mapping_code,
+               if self.source_error.is_some() { format!("{}", self.source_error.as_ref().unwrap()) } else { String::new() }
+        )
+    }
+}
+
+impl Error for WidError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        if let Some(ref e) = self.source_error {
+            Some(e as &dyn Error)
+        } else {
+            None
+        }
+    }
 }
 
 /// Refer to the authoritative error code of gRPC APIs.
 /// https:///github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
+/// https://cloud.google.com/apis/design/errors
 ///
 /// Sometimes multiple error codes may apply.  Services should return
 /// the most specific error code that applies.  For example, prefer
 /// `OutOfRange` over `FailedPrecondition` if both codes apply.
 /// Similarly prefer `NotFound` or `AlreadyExists` over `FailedPrecondition`.
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
 #[repr(i8)]
 pub enum Kind {
     /// Not an error; returned on success
     ///
-    /// HTTP Mapping: 200 OK
-    OK = 0,
+    /// HTTP Mapping: 200 Ok
+    Ok = 0,
 
     /// The operation was cancelled, typically by the caller.
     ///
@@ -185,11 +225,37 @@ pub enum Kind {
     DataLoss = 15,
 }
 
+impl Default for Kind {
+    fn default() -> Self {
+        Self::Ok
+    }
+}
+
+impl Display for Kind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.clone() as i8)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Message {
     Default(String),
     I18n(String),
 }
 
+impl Default for Message {
+    fn default() -> Self {
+        Self::Default(String::new())
+    }
+}
+
+impl Display for Message {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
 #[repr(i8)]
 pub enum Scope {
     Internal = 0,
@@ -197,6 +263,19 @@ pub enum Scope {
     Serverside = 2,
 }
 
+impl Default for Scope {
+    fn default() -> Self {
+        Self::Internal
+    }
+}
+
+impl Display for Scope {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.clone() as i8)
+    }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
 #[repr(i8)]
 pub enum RetryMode {
     Unknown = 0,
@@ -204,6 +283,19 @@ pub enum RetryMode {
     Denied = 2,
 }
 
+impl Default for RetryMode {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
+impl Display for RetryMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.clone() as i8)
+    }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
 #[repr(i8)]
 pub enum PassThroughMode {
     Auto = 0,
@@ -211,8 +303,20 @@ pub enum PassThroughMode {
     Never = 2,
 }
 
+impl Default for PassThroughMode {
+    fn default() -> Self {
+        Self::Auto
+    }
+}
+
+impl Display for PassThroughMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.clone() as i8)
+    }
+}
+
 #[test]
-fn u16_max() {
+fn max_digits() {
     println!("u8::MAX {}", u8::MAX);
     println!("u16::MAX {}", u16::MAX);
     println!("u32::MAX {}", u32::MAX);
