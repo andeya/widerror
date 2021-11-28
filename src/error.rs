@@ -33,8 +33,8 @@ impl WidError {
     pub fn new() -> WidError {
         WidError::default()
     }
-    pub fn set_source(mut self, e: Box<WidError>) -> WidError {
-        self.source_error = Some(e);
+    pub fn set_source(mut self, e: WidError) -> WidError {
+        self.source_error = Some(Box::new(e));
         self
     }
 }
