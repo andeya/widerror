@@ -9,15 +9,12 @@ pub struct WidError {
     /// error message
     pub message: Message,
     /// error code
-    /// 5+4=9 digits [100000000, 999999999]
-    /// Automatically derived by namespace_code and sub_code
+    /// suggest digits [100000000, 999999999]
     pub code: u32,
     /// error name
     pub name: String,
-    /// 5 digits [10000, 99999]
-    pub namespace_code: u32,
-    /// 4 digits [0, 9999]
-    pub sub_code: u16,
+    /// suggest as a prefix of code, 5 digits [10000, 99999]
+    pub namespace: u32,
     pub kind: Kind,
     pub scope: Scope,
     /// error level [0, 255]
@@ -30,8 +27,12 @@ pub struct WidError {
 }
 
 impl WidError {
-    pub fn new() -> WidError {
-        WidError::default()
+    pub fn new(code: u32, message: Message) -> WidError {
+        WidError {
+            code,
+            message,
+            ..WidError::default()
+        }
     }
     pub fn set_source(mut self, e: WidError) -> WidError {
         self.source_error = Some(Box::new(e));
@@ -42,8 +43,8 @@ impl WidError {
 impl Display for WidError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f,
-               "code={}, name={}, namespace_code={}, sub_code={}, scope={}, kind={}, level={}, message={}, retry_mode={}, pass_through_mode={}, mapping_code={}, source_error=({})",
-               self.code, self.name, self.namespace_code, self.sub_code, self.scope, self.kind, self.level, self.message, self.retry_mode, self.pass_through_mode, self.mapping_code,
+               "code={}, name={}, namespace={}, scope={}, kind={}, level={}, message={}, retry_mode={}, pass_through_mode={}, mapping_code={}, source_error=({})",
+               self.code, self.name, self.namespace, self.scope, self.kind, self.level, self.message, self.retry_mode, self.pass_through_mode, self.mapping_code,
                if self.source_error.is_some() { format!("{}", self.source_error.as_ref().unwrap()) } else { String::new() }
         )
     }
