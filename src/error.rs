@@ -34,7 +34,7 @@ impl WidError {
             ..WidError::default()
         }
     }
-    pub fn set_source(mut self, e: WidError) -> WidError {
+    pub fn with_source(mut self, e: WidError) -> WidError {
         self.source_error = Some(Box::new(e));
         self
     }
